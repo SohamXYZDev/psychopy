@@ -34,8 +34,16 @@ After importing sound, the sound lib and driver being used will be stored as::
 # Distributed under the terms of the GNU General Public License (GPL).
 
 import sys
-from .audiodevice import *
-from .audioclip import *  # import objects related to AudioClip
+try:
+    from .audiodevice import *
+except (ImportError, ModuleNotFoundError):
+    pass
+
+try:
+    from .audioclip import *  # import objects related to AudioClip
+except (ImportError, ModuleNotFoundError):
+    pass
+
 from . import microphone, sound
 from .sound import Sound
 
@@ -47,4 +55,25 @@ __all__ = [
 
 # used to check if we are on 64-bit Python
 bits32 = sys.maxsize == 2 ** 32
+
+
+def __getattr__(name: str):
+    """Provide backwards compatibility for deprecated module-level attributes."""
+    if name in ("audioLib", "audioDriver"):
+        import warnings
+        warnings.warn(
+            f"`psychopy.sound.{name}` is deprecated. Sound backends are now managed by "
+            "`psychopy.hardware.speaker.SpeakerDevice`.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        try:
+            from psychopy.hardware.speaker import SpeakerDevice
+            backend = SpeakerDevice.resolveBackend()
+            if name == "audioLib":
+                return getattr(backend, "backend", getattr(backend, "__name__", "ptb"))
+            return getattr(backend, "driver", None)
+        except Exception:
+            return None
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 

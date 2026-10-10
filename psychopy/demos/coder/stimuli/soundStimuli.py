@@ -17,8 +17,11 @@ from psychopy import logging, prefs
 logging.console.setLevel(logging.DEBUG)  # get messages about the sound lib as it loads
 
 from psychopy import sound, core
+from psychopy.hardware.speaker import SpeakerDevice
 
-print('Using %s (with %s) for sounds' % (sound.audioLib, sound.audioDriver))
+backend = SpeakerDevice.resolveBackend()
+backendName = getattr(backend, 'backend', getattr(backend, '__name__', 'unknown'))
+print('Using %s for sounds' % backendName)
 
 highA = sound.Sound('A', octave=3, sampleRate=44100, secs=0.8, stereo=True)
 highA.setVolume(0.8)
